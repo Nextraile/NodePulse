@@ -1,0 +1,14 @@
+{
+  "name": "nodepulse-mq-broker",
+  "version": "1.0.0",
+  "description": "Custom Lightweight In-Memory Message Queue Broker built with Vanilla Node.js",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --max-old-space-size=450 --inspect=0.0.0.0:9229 ./src/index.js",
+    "test": "node --test"
+  },
+  "keywords": ["message-queue", "broker", "vanilla-js"],
+  "author": "Nextraile",
+  "license": "ISC"
+}

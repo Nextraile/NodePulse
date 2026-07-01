@@ -1,0 +1,13 @@
+# Dockerfile for development environment
+
+FROM node:26-alpine
+WORKDIR /home/node/app
+# using node as user to avoid permission issues
+RUN chown -R node:node /home/node/app
+USER node
+# copying package.json and package-lock.json first to leverage Docker cache
+COPY --chown=node:node package*.json ./
+RUN npm install
+COPY --chown=node:node . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

@@ -1,0 +1,47 @@
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    image: nodepulse/mq-broker:dev
+    container_name: nodepulse-app-dev
+    user: node
+    working_dir: /home/node/app
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    ports:
+      - "3000:3000"
+      - "9229:9229" # expose the debugger port
+    command: >
+      sh -c "
+      if [ ! -f .env ]; then
+        echo '.env is not found, copying from .env.example...';
+        cp .env.example .env;
+      fi && npm run dev
+      "
+    volumes:
+      - .:/home/node/app
+      - /home/node/app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /home/node/app
+          ignore:
+            - node_modules
+        - action: rebuild
+          path: package.json
+    networks:
+      - mq_network
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.50'
+          memory: 256M
+        limits:
+          cpus: '1.00'
+          memory: 512M
+networks:
+  mq_network:
+    driver: bridge
