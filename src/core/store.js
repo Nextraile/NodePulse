@@ -38,7 +38,7 @@ function removeMessageFromQueue(topic, contentId) {
 		console.log(`(store.removeMessageFromQueue): Topic not found for removal: ${topic}`);
 		return;
 	}
-	
+
 	const queue = queues.get(topic);
 	const index = queue.findIndex(content => content.id === contentId);
 
@@ -51,6 +51,7 @@ function removeMessageFromQueue(topic, contentId) {
 	console.log(`(store.removeMessageFromQueue): Message removed from queue: ${contentId} in topic: ${topic}, removed content: ${JSON.stringify(removedContent)}`);
 
 	if (queue.length === 0) {
+    console.log(`(store.removeMessageFromQueue): Queue for topic: ${topic} is now empty, removing queue...`);
 		removeQueue(topic);
 	}
 }
@@ -66,7 +67,13 @@ function removeQueue(topic) {
 
 export function consume(consumerId, topic) {
 	const queue = queues.get(topic);
-  const content = queue.shift();
+  
+	if (!queue || queue.length === 0) {
+		console.log(`(store.consume): No messages available to consume for topic: ${topic}`);
+		return;
+	}
+
+	const content = queue.shift();
 
   if (content) {
 		console.log(`(store.consume): Consuming message from topic: ${topic}, content ID: ${content.id}, content: ${JSON.stringify(content.payload)}`);
@@ -101,6 +108,15 @@ function pushMessageToInflight(consumerId, topic, content) {
 	return inflightId;
 }
 
+function removeInflightMetadataFromContent(content) {
+	if (content.inflight) {
+		delete content.inflight;
+    console.log(`(store.removeInflightMetadataFromContent): Cleaned inflight metadata from content ID: ${content.id}`);
+  } else {
+    console.log(`(store.removeInflightMetadataFromContent): No inflight metadata found in content ID: ${content.id}`);
+  }
+}
+
 function removeMessageFromInflight(inflightId) {
 	if (inflight.has(inflightId)) {
 		const content = inflight.get(inflightId);
@@ -113,41 +129,38 @@ function removeMessageFromInflight(inflightId) {
 
 export function ack(consumerId, contentId) {
 	for (const [inflightId, content] of inflight.entries()) {
-		if (content.id !== contentId && content.inflight.consumer_id !== consumerId) {
-			console.log(`(store.ack): Message not found for acknowledgment: ${contentId} and consumer: ${consumerId}`);
+		if (content.id === contentId && content.inflight.consumer_id === consumerId) {
+			removeMessageFromInflight(inflightId);
+			console.log(`(store.ack): Message acknowledged: ${contentId} and removed from inflight: ${inflightId}`);
 			return;
 		}
-
-		removeMessageFromInflight(inflightId);
-		console.log(`(store.ack): Message acknowledged: ${contentId} and removed from inflight: ${inflightId}`);
-		return;
 	}
+
+	console.log(`(store.ack): Message not found for acknowledgment: ${contentId} and consumer: ${consumerId}`);
 }
 
 export function nack(consumerId, contentId) {
 	for (const [inflightId, content] of inflight.entries()) {
-		if (content.id !== contentId && content.inflight.consumer_id !== consumerId) {
-			console.log(`(store.nack): Message not found for negative acknowledgment: ${contentId} and consumer: ${consumerId}`);
+		if (content.id === contentId && content.inflight.consumer_id === consumerId) {
+      retry(inflightId);
+      console.log(`(store.nack): Message negatively acknowledged: ${contentId} has been processed`);
 			return;
 		}
-
-		retry(inflightId);
-		console.log(`(store.nack): Message negatively acknowledged: ${contentId} has been processed`);
-		return;
 	}
+
+  console.log(`(store.nack): Message not found for negative acknowledgment: ${contentId} and consumer: ${consumerId}`);
 }
 
 export function unack(consumerId, contentId) {
 	for (const [inflightId, content] of inflight.entries()) {
-		if (content.id !== contentId && content.inflight.consumer_id !== consumerId) {
-			console.log(`(store.unack): Message not found for unacknowledgment: ${contentId} and consumer: ${consumerId}`);
+		if (content.id === contentId && content.inflight.consumer_id === consumerId) {
+      retry(inflightId);
+      console.log(`(store.unack): Message unacknowledged: ${contentId} has been processed`);
 			return;
 		}
-
-		retry(inflightId);
-		console.log(`(store.unack): Message unacknowledged: ${contentId} has been processed`);
-		return;
 	}
+
+  console.log(`(store.unack): Message not found for unacknowledgment: ${contentId} and consumer: ${consumerId}`);
 }
 
 function retry(inflightId) {
@@ -157,18 +170,22 @@ function retry(inflightId) {
 	}
 
 	const content = inflight.get(inflightId);
+	const topic = content.inflight.from_topic;
+
 	content.retry_count += 1;
-	republish(content.inflight.from_topic, content);
+  console.log(`(store.retry): Incremented retry count for content ID: ${content.id}, new retry count: ${content.retry_count}`);
+	removeInflightMetadataFromContent(content); // modifies the content object directly
+	republish(topic, content);
 	removeMessageFromInflight(inflightId);
-	console.log(`(store.retry): Message retried and republished to topic: ${content.inflight.from_topic}, content ID: ${content.id}`);
+	console.log(`(store.retry): Message retried and republished to topic: ${topic}, content ID: ${content.id}`);
 }
 
 export function getQueues() {
 	console.log(`(store.getQueues): Retrieving all queues`);
-	return queues;
+	return new Map([...queues].map(([topic, queue]) => [topic, queue.slice()]));
 }
 
 export function getInflight() {
 	console.log(`(store.getInflight): Retrieving all inflight messages`);
-	return inflight;
+	return new Map([...inflight].map(([id, content]) => [id, content]));
 }
