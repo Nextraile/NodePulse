@@ -19,7 +19,7 @@ export function publish(topic, message) {
   }
 
   queues.get(topic).push(content);
-	console.log(`(store.publish): Published message to topic: ${topic}, content ID: ${content.id}, content: ${JSON.stringify(message)}`);
+	console.log(`(store.publish): Published message to topic: ${topic}, content ID: ${content.id}, content: ${jsonStringifyWithCircularRefs(message)}`);
 }
 
 function republish(topic, content) {
@@ -30,7 +30,7 @@ function republish(topic, content) {
 	}
 
 	queues.get(topic).push(content);
-	console.log(`(store.republish): Republished message to topic: ${topic}, content ID: ${content.id}, content: ${JSON.stringify(content.payload)}`);
+	console.log(`(store.republish): Republished message to topic: ${topic}, content ID: ${content.id}, content: ${jsonStringifyWithCircularRefs(content.payload)}`);
 }
 
 function removeMessageFromQueue(topic, contentId) {
@@ -48,7 +48,7 @@ function removeMessageFromQueue(topic, contentId) {
 	}
 
 	const removedContent = queue.splice(index, 1);
-	console.log(`(store.removeMessageFromQueue): Message removed from queue: ${contentId} in topic: ${topic}, removed content: ${JSON.stringify(removedContent)}`);
+	console.log(`(store.removeMessageFromQueue): Message removed from queue: ${contentId} in topic: ${topic}, removed content: ${jsonStringifyWithCircularRefs(removedContent)}`);
 
 	if (queue.length === 0) {
     console.log(`(store.removeMessageFromQueue): Queue for topic: ${topic} is now empty, removing queue...`);
@@ -76,7 +76,7 @@ export function consume(consumerId, topic) {
 	const content = queue.shift();
 
   if (content) {
-		console.log(`(store.consume): Consuming message from topic: ${topic}, content ID: ${content.id}, content: ${JSON.stringify(content.payload)}`);
+		console.log(`(store.consume): Consuming message from topic: ${topic}, content ID: ${content.id}, content: ${jsonStringifyWithCircularRefs(content.payload)}`);
 		const inflightId = pushMessageToInflight(consumerId, topic, content);
 		console.log(
 			`(store.consume): Message consumed by ${consumerId} from topic: ${topic}, content ID: ${content.id}, inflight ID: ${inflightId}`
@@ -182,10 +182,22 @@ function retry(inflightId) {
 
 export function getQueues() {
 	console.log(`(store.getQueues): Retrieving all queues`);
-	return new Map([...queues].map(([topic, queue]) => [topic, queue.slice()]));
+	return new Map([...queues].map(([topic, queue]) => [topic, queue.map((content) => structuredClone(content))]));
 }
 
 export function getInflight() {
 	console.log(`(store.getInflight): Retrieving all inflight messages`);
-	return new Map([...inflight].map(([id, content]) => [id, content]));
+	return new Map([...inflight].map(([id, content]) => [id, structuredClone(content)]));
+}
+
+function jsonStringifyWithCircularRefs(obj) {
+  let jsonString;
+  try {
+    jsonString = JSON.stringify(obj);
+  } catch (error) {
+    console.error("Failed to stringify object:", error.message);
+    jsonString = "{}"; 
+  }
+
+  return jsonString;
 }
