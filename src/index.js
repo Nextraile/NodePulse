@@ -32,7 +32,8 @@ function runTests() {
     const consumedMessage = store.consume(consumerId, "order-topic");
 
     assert(consumedMessage !== undefined, "Consumed message must not be empty.");
-    assert(queues.has("order-topic") === false, "Topic queue must be deleted since it's empty after consumption.");
+    const queuesAfterConsume = store.getQueues();
+    assert(queuesAfterConsume.has("order-topic") === false, "Topic queue must be deleted since it's empty after consumption.");
 
     const inflight = store.getInflight();
     assert(inflight.size === 1, "Message must be added to the inflight map.");
@@ -49,7 +50,8 @@ function runTests() {
     const messageIdToAck = consumedMessage.id;
     store.ack(consumerId, messageIdToAck);
 
-    assert(inflight.size === 0, "Inflight map must be empty after message is acknowledged.");
+    const inflightAfterAck = store.getInflight();
+    assert(inflightAfterAck.size === 0, "Inflight map must be empty after message is acknowledged.");
     console.log("\n");
 
     // ---------------------------------------------------------
@@ -61,10 +63,13 @@ function runTests() {
 
     store.nack(consumerId, msgToNack.id);
 
-    assert(inflight.size === 0, "Inflight must be empty after NACK triggers retry.");
-    assert(queues.has("order-topic") === true, "Message must return to the original queue.");
+    const inflightAfterNack = store.getInflight();
+    assert(inflightAfterNack.size === 0, "Inflight must be empty after NACK triggers retry.");
+
+    const queuesAfterNack = store.getQueues();
+    assert(queuesAfterNack.has("order-topic") === true, "Message must return to the original queue.");
     
-    const retriedMessage = queues.get("order-topic")[0];
+    const retriedMessage = queuesAfterNack.get("order-topic")[0];
     assert(retriedMessage.retry_count === 1, "Retry count must increment to 1.");
     console.log("\n");
 
@@ -74,5 +79,4 @@ function runTests() {
   }
 }
 
-// Jalankan test
 runTests();
