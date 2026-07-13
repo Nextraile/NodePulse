@@ -1,6 +1,6 @@
 services:
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.dev
     image: nodepulse/mq-broker:dev
@@ -8,11 +8,16 @@ services:
     user: node
     working_dir: /home/node/app
     environment:
-      - NODE_ENV=development
-      - PORT=3000
+      - NODE_ENV=${APP_ENV:-development}
+      - NODE_OPTIONS=--max-old-space-size=${APP_MAX_RAM_MB:-1843}
+      - UV_THREADPOOL_SIZE=${APP_THREADS:-4}
+      - HTTP_PORT=${DOCKER_HTTP_PORT:-3000}
+      - TCP_PORT=${DOCKER_TCP_PORT:-4000}
+      - MAX_RETRIES=${MAX_RETRIES:-5}
     ports:
-      - "3000:3000"
-      - "9229:9229" # expose the debugger port
+      - "${HOST_HTTP_PORT:-3000}:${DOCKER_HTTP_PORT:-3000}"
+      - "${HOST_TCP_PORT:-4000}:${DOCKER_TCP_PORT:-4000}"
+      - "${HOST_DEBUGGER_PORT:-9229}:9229"
     command: >
       sh -c "
       if [ ! -f .env ]; then
@@ -36,12 +41,12 @@ services:
       - mq_network
     deploy:
       resources:
-        reservations:
-          cpus: '0.50'
-          memory: 256M
         limits:
-          cpus: '1.00'
-          memory: 512M
+          cpus: "${DOCKER_CPUS_LIMIT:-1.00}"
+          memory: ${DOCKER_MEMORY_LIMIT_MB:-2048}m
+        reservations:
+          cpus: "${DOCKER_CPUS_RESERVATION:-0.25}"
+          memory: ${DOCKER_MEMORY_RESERVATION_MB:-128}m
 networks:
   mq_network:
     driver: bridge
