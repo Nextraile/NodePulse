@@ -5,8 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "node --watch --max-old-space-size=450 --inspect=0.0.0.0:9229 ./src/index.js",
-    "test": "node --test"
+    "dev": "node --env-file=.env --watch --inspect=0.0.0.0:9229 ./src/index.js",
+    "test": "node --env-file=.env --test"
   },
   "keywords": ["message-queue", "broker", "vanilla-js"],
   "author": "Nextraile",
