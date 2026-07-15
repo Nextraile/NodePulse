@@ -1,45 +1,19 @@
 import net from "net";
 
 const server = net.createServer((socket) => {
-  handleSocketConnect(socket);
-  handleSocketData(socket);
-  handleSocketError(socket);
-  handleSocketClose(socket);
+  socket.on("connect", () => handleSocketConnect());
+  socket.on("data", (data) => handleSocketData(data));
+  socket.on("error", (err) => handleSocketError(err));
+  socket.on("close", (hadError) => handleSocketClose(hadError));
 });
 
-export function startServer(port) {
-  server.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-  });
-}
+export function startServer(port) { server.listen(port, () => { console.log(`(tcp-server.startServer): Server listening on port ${port}`) }) }
+export function stopServer() { server.close(() => { console.log(`(tcp-server.stopServer): Server closed`) }) }
 
-export function stopServer() {
-  server.close(() => {
-    console.log("Server closed");
-  });
+function handleSocketConnect() { console.log(`(tcp-server.handleSocketConnect): Socket connected`) }
+function handleSocketData(data) { console.log(`(tcp-server.handleSocketData): Received data: ${data}`) }
+function handleSocketError(err) {
+  console.error(`(tcp-server.handleSocketError): Socket error. code: ${err.code} | message: ${err.message}`);
+  socket.destroy();
 }
-
-function handleSocketConnect(socket) {
-  socket.on("connect", () => {
-    console.log("Socket connected");
-  });
-}
-
-function handleSocketData(socket) {
-  socket.on("data", (data) => {
-    console.log(`Received data: ${data}`);
-  });
-}
-
-function handleSocketError(socket) {
-  socket.on("error", (err) => {
-    console.error(`Socket error: ${err.code} | ${err.message}`);
-    socket.destroy();
-  });
-}
-
-function handleSocketClose(socket) {
-  socket.on("close", (hadError) => {
-    console.log(`Socket closed${hadError ? " due to error" : ""}`);
-  });
-}
+function handleSocketClose(hadError) { console.log(`(tcp-server.handleSocketClose): Socket closed${hadError ? " due to error" : ""}`) }
