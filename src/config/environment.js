@@ -9,8 +9,8 @@ const appConfig = {
   },
 
   ports: {
-    http: validateEnvVar({HTTP_PORT: env.HTTP_PORT}, (key, value) => toNumber(key, value), 3000),
-    tcp: validateEnvVar({TCP_PORT: env.TCP_PORT}, (key, value) => toNumber(key, value), 4000),
+    http: validateEnvVar({HTTP_PORT: env.DOCKER_HTTP_PORT}, (key, value) => toNumber(key, value), 3000),
+    tcp: validateEnvVar({TCP_PORT: env.DOCKER_TCP_PORT}, (key, value) => toNumber(key, value), 4000),
   }
 };
 
