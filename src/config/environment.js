@@ -8,8 +8,8 @@ const appConfig = {
     delay: validateEnvVar({RETRIES_DELAY: env.RETRIES_DELAY_MS}, (key, value) => toNumber(key, value), 1000),
   },
 
-  ports: {
-    http: validateEnvVar({HTTP_PORT: env.DOCKER_HTTP_PORT}, (key, value) => toNumber(key, value), 3000),
+  networks: {
+    http: { port: validateEnvVar({HTTP_PORT: env.DOCKER_HTTP_PORT}, (key, value) => toNumber(key, value), 3000) },
     tcp: {
       port: validateEnvVar({TCP_PORT: env.DOCKER_TCP_PORT}, (key, value) => toNumber(key, value), 4000),
       timeout: validateEnvVar({TCP_TIMEOUT: env.TCP_TIMEOUT_MS}, (key, value) => toNumber(key, value), 5000)
