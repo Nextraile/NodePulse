@@ -1,5 +1,5 @@
 import net from "net";
-import * as appConfig from "../config/environment.js";
+import appConfig from "../config/environment.js";
 
 const server = net.createServer();
 
