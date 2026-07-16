@@ -1,45 +1,38 @@
 import net from "net";
+import * as appConfig from "../config/environment.js";
 
-const server = net.createServer((socket) => {
-  handleSocketConnect(socket);
-  handleSocketData(socket);
-  handleSocketError(socket);
-  handleSocketClose(socket);
+const server = net.createServer();
+
+server.on("listening", () => handleSocketListening(server.address().port));
+server.on("connection", (socket) => {
+  handleSocketConnection(socket.remoteAddress, socket.remotePort);
+  // if (socket.timeout(appConfig.tcp.timeout)) console.log(`(tcp-server): Socket timeout set to ${appConfig.tcp.timeout} ms`);
 });
+server.on("data", (chunk) => handleSocketData(chunk));
+server.on("drain", () => handleSocketDrain());
+server.on("timeout", () => handleSocketTimeout());
+server.on("end", () => handleSocketEnd());
+server.on("error", (err) => handleSocketError(err));
+server.on("close", (hadError) => handleSocketClose(hadError));
 
-export function startServer(port) {
-  server.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
-  });
-}
+export function startServer(port) { server.listen(port) }
+export function stopServer() { server.close(() => { console.log(`(tcp-server.stopServer): [SERVER] Now closed`) }) }
 
-export function stopServer() {
-  server.close(() => {
-    console.log("Server closed");
-  });
+//=================
+// HELPER FUNCTIONS
+//=================
+function handleSocketListening(port) { console.log(`(tcp-server.handleSocketListening): [SERVER] Now listening on port ${port}`) }
+function handleSocketConnection(address, port) { console.log(`(tcp-server.handleSocketConnection): [SERVER] New client connected from ${address}:${port}`) }
+function handleSocketData(chunk) {
+  console.log(`(tcp-server.handleSocketData): [SERVER] Received data chunk: ${chunk}`);
+  const statusFlushed = server.write(`Data fully received`);
+  if (!statusFlushed) console.log(`(tcp-server.handleSocketData): [SERVER] Buffer full. Waiting for 'drain' event...`);
 }
-
-function handleSocketConnect(socket) {
-  socket.on("connect", () => {
-    console.log("Socket connected");
-  });
+function handleSocketDrain() { console.log(`(tcp-server.handleSocketDrain): [SERVER] Buffer drained. Ready to send more data.`) }
+function handleSocketTimeout() { console.warn(`(tcp-server.handleSocketTimeout): [SERVER] Socket timeout reached. Closing socket...`) }
+function handleSocketEnd() { console.log(`(tcp-server.handleSocketEnd): [SERVER] Socket ended by client.`) }
+function handleSocketError(err) {
+  console.error(`(tcp-server.handleSocketError): [SERVER] Socket error. code: ${err.code} | message: ${err.message}`);
+  socket.destroy();
 }
-
-function handleSocketData(socket) {
-  socket.on("data", (data) => {
-    console.log(`Received data: ${data}`);
-  });
-}
-
-function handleSocketError(socket) {
-  socket.on("error", (err) => {
-    console.error(`Socket error: ${err.code} | ${err.message}`);
-    socket.destroy();
-  });
-}
-
-function handleSocketClose(socket) {
-  socket.on("close", (hadError) => {
-    console.log(`Socket closed${hadError ? " due to error" : ""}`);
-  });
-}
+function handleSocketClose(hadError) { console.log(`(tcp-server.handleSocketClose): [SERVER] Socket closed${hadError ? " due to error" : ""}`) }
