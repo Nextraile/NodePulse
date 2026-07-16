@@ -5,7 +5,7 @@ const env = process.env;
 const appConfig = {
   retries: {
     max: validateEnvVar({RETRIES_MAX: env.RETRIES_MAX}, (key, value) => toNumber(key, value), 5),
-    delay: validateEnvVar({RETRIES_DELAY: env.RETRIES_DELAY}, (key, value) => toNumber(key, value), 1000),
+    delay: validateEnvVar({RETRIES_DELAY: env.RETRIES_DELAY_MS}, (key, value) => toNumber(key, value), 1000),
   },
 
   ports: {
