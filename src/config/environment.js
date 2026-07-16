@@ -10,7 +10,10 @@ const appConfig = {
 
   ports: {
     http: validateEnvVar({HTTP_PORT: env.DOCKER_HTTP_PORT}, (key, value) => toNumber(key, value), 3000),
-    tcp: validateEnvVar({TCP_PORT: env.DOCKER_TCP_PORT}, (key, value) => toNumber(key, value), 4000),
+    tcp: {
+      port: validateEnvVar({TCP_PORT: env.DOCKER_TCP_PORT}, (key, value) => toNumber(key, value), 4000),
+      timeout: validateEnvVar({TCP_TIMEOUT: env.TCP_TIMEOUT_MS}, (key, value) => toNumber(key, value), 5000)
+    }
   }
 };
 
