@@ -25,8 +25,8 @@ export function stopServer() { server.close(() => { console.log(`(tcp-server.sto
 function handleSocketListening(port) { console.log(`(tcp-server.handleSocketListening): [SERVER] Now listening on port ${port}`) }
 function handleSocketConnection(address, port) { console.log(`(tcp-server.handleSocketConnection): [SERVER] New client connected from ${address}:${port}`) }
 function handleSocketSetTimeout(timeout) { console.log(`(tcp-server.handleSocketSetTimeout): [SERVER] Socket timeout set to ${timeout} ms`) }
-function handleSocketData(chunk) {
-  console.log(`(tcp-server.handleSocketData): [SERVER] Received data chunk: ${chunk}`);
+function handleSocketData(buffer) {
+  console.log(`(tcp-server.handleSocketData): [SERVER] Received buffer: ${buffer}`);
   const statusFlushed = server.write(`Data fully received`);
   if (!statusFlushed) console.log(`(tcp-server.handleSocketData): [SERVER] Buffer full. Waiting for 'drain' event...`);
 }
