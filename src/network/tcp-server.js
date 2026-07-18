@@ -1,12 +1,13 @@
 import net from "net";
-import * as appConfig from "../config/environment.js";
+import appConfig from "../config/environment.js";
 
 const server = net.createServer();
 
 server.on("listening", () => handleSocketListening(server.address().port));
 server.on("connection", (socket) => {
   handleSocketConnection(socket.remoteAddress, socket.remotePort);
-  // if (socket.timeout(appConfig.tcp.timeout)) console.log(`(tcp-server): Socket timeout set to ${appConfig.tcp.timeout} ms`);
+  socket.setTimeout(appConfig.networks.tcp.timeout);
+  handleSocketSetTimeout(appConfig.networks.tcp.timeout);
 });
 server.on("data", (chunk) => handleSocketData(chunk));
 server.on("drain", () => handleSocketDrain());
@@ -23,6 +24,7 @@ export function stopServer() { server.close(() => { console.log(`(tcp-server.sto
 //=================
 function handleSocketListening(port) { console.log(`(tcp-server.handleSocketListening): [SERVER] Now listening on port ${port}`) }
 function handleSocketConnection(address, port) { console.log(`(tcp-server.handleSocketConnection): [SERVER] New client connected from ${address}:${port}`) }
+function handleSocketSetTimeout(timeout) { console.log(`(tcp-server.handleSocketSetTimeout): [SERVER] Socket timeout set to ${timeout} ms`) }
 function handleSocketData(chunk) {
   console.log(`(tcp-server.handleSocketData): [SERVER] Received data chunk: ${chunk}`);
   const statusFlushed = server.write(`Data fully received`);
