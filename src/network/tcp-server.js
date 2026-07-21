@@ -29,7 +29,7 @@ function handleSocketData(chunk, callback) {
   if (typeof callback !== "function") throw new Error(`(tcp-server.handleSocketData): [SERVER] Callback function is required`);
   console.log(`(tcp-server.handleSocketData): [SERVER] Received data chunk: ${chunk}`);
 
-  const lengthPrefix = 4; // in bytes
+  const lengthPrefix = appConfig.networks.tcp.lengthPrefix;
   let mainBuffer = Buffer.alloc(0); // initialize an empty buffer to accumulate incoming data
   let expectedLength = null;
 
