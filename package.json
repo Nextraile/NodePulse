@@ -1,8 +1,8 @@
 {
-  "name": "nodepulse-mq-broker",
+  "name": "nodepulse-mq",
   "version": "1.0.0",
   "description": "Custom Lightweight In-Memory Message Queue Broker built with Vanilla Node.js",
-  "main": "server.js",
+  "main": "./src/index.js",
   "type": "module",
   "scripts": {
     "dev": "node --env-file=.env --watch --inspect=0.0.0.0:9229 ./src/index.js",
