@@ -1,12 +1,15 @@
 import * as net from 'net'
 
 export function parseBuffer(buffer) {
-  const data = buffer.toString('utf-8');
-  const parsedData = JSON.parse(data);
-  validateData(parsedData);
-  return parsedData;
+  const stringifiedBuffer = buffer.toString('utf-8');
+  const parsedBuffer = JSON.parse(stringifiedBuffer);
+  validateData(parsedBuffer);
+  return parsedBuffer;
 }
 
+//=================
+// HELPER FUNCTIONS
+//=================
 function validateDataFromClient(jsonData) {
   if (jsonData === null || typeof jsonData !== 'object') {
     throw new Error(`(protocol.validateData): [PROTOCOL] Invalid data format: ${typeof jsonData}`);
