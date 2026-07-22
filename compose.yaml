@@ -28,12 +28,25 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
-          target: /home/node/app
-          ignore:
-            - node_modules
+          path: ./src
+          target: /home/node/app/src
+        - action: sync
+          path: ./tests
+          target: /home/node/app/tests
+        - action: sync
+          path: ./.env
+          target: /home/node/app/.env
+
         - action: rebuild
           path: package.json
+        - action: rebuild
+          path: package-lock.json
+        - action: rebuild
+          path: tsconfig.json
+        - action: rebuild
+          path: Dockerfile.dev
+        - action: rebuild
+          path: compose.yaml
     networks:
       - mq_network
     deploy:
