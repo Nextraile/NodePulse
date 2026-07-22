@@ -3,6 +3,10 @@ console.log("(environment): Initializing environment variables...");
 const env = process.env;
 
 const appConfig = {
+  queue: {
+    maxSize: validateEnvVar({QUEUE_MAX_SIZE: env.QUEUE_MAX_SIZE}, (key, value) => toNumber(key, value), 1000),
+  },
+  
   retries: {
     max: validateEnvVar({RETRIES_MAX: env.RETRIES_MAX}, (key, value) => toNumber(key, value), 5),
     delay: validateEnvVar({RETRIES_DELAY: env.RETRIES_DELAY_MS}, (key, value) => toNumber(key, value), 1000),
