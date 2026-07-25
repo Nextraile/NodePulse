@@ -2,53 +2,29 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.dev
-    image: nodepulse/mq-broker:dev
-    container_name: nodepulse-app-dev
+      dockerfile: Dockerfile
+      target: production
+    image: nodepulse-mq/app:1.0.0
+    container_name: nodepulse
     user: node
     working_dir: /home/node/app
+
+    env_file:
+      - path: .env
+        required: false
+
     environment:
-      - NODE_ENV=${APP_ENV:-development}
       - NODE_OPTIONS=--max-old-space-size=${APP_MAX_RAM_MB:-1843}
       - UV_THREADPOOL_SIZE=${APP_THREADS:-4}
-    ports:
-      - "${HOST_HTTP_PORT:-3000}:${DOCKER_HTTP_PORT:-3000}"
-      - "${HOST_TCP_PORT:-4000}:${DOCKER_TCP_PORT:-4000}"
-      - "${HOST_DEBUGGER_PORT:-9229}:9229"
-    command: >
-      sh -c "
-      if [ ! -f .env ]; then
-        echo '.env is not found, copying from .env.example...';
-        cp .env.example .env;
-      fi && npm run dev
-      "
-    volumes:
-      - .:/home/node/app
-      - /home/node/app/node_modules
-    develop:
-      watch:
-        - action: sync
-          path: ./src
-          target: /home/node/app/src
-        - action: sync
-          path: ./tests
-          target: /home/node/app/tests
-        - action: sync
-          path: ./.env
-          target: /home/node/app/.env
 
-        - action: rebuild
-          path: package.json
-        - action: rebuild
-          path: package-lock.json
-        - action: rebuild
-          path: tsconfig.json
-        - action: rebuild
-          path: Dockerfile.dev
-        - action: rebuild
-          path: compose.yaml
+    ports:
+      - "${HOST_HTTP_PORT:-3000}:3000"
+      - "${HOST_TCP_PORT:-4000}:4000"
+      - "${HOST_DEBUGGER_PORT:-9229}:9229"
+
     networks:
       - mq_network
+
     deploy:
       resources:
         limits:
@@ -57,6 +33,7 @@ services:
         reservations:
           cpus: "${DOCKER_CPUS_RESERVATION:-0.25}"
           memory: ${DOCKER_MEMORY_RESERVATION_MB:-128}m
+          
 networks:
   mq_network:
     driver: bridge
